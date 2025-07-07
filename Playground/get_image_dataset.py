@@ -9,6 +9,7 @@ from torchvision import transforms as T
 from torchvision.io import decode_image
 from PIL import Image
 import os
+import matplotlib.pyplot as plt
 
 class SegmentationDataset(Dataset):
     def __init__(self, images_path, masks_path, patch_size):
@@ -43,10 +44,16 @@ class SegmentationDataset(Dataset):
                 img = torch.transpose(img, 1,2)
                 mask = torch.transpose(mask, 1, 2)
                 box = (row, col, self.patch_size, self.patch_size)
+                # print(box)
                 # crop out patch from image and mask
                 img_patch = T.functional.crop(img, box[0], box[1], box[2], box[3]).to(torch.float32)
+                # pil_box = (row, col, row + self.patch_size, col + self.patch_size)
+                # pil_img = pil_img.crop(pil_box)
+                # plt.title("pytorch")
+                # plt.imshow(img_patch.transpose(0,2))
+                # plt.show()
+                # pil_img.show()
                 mask_patch = T.functional.crop(mask, box[0], box[1], box[2], box[3])
-
                 # get the label of the patch based on dominant class in patch
                 label = get_label(mask_patch)
                 label_tensor = torch.tensor(label).to(torch.int64)
@@ -55,11 +62,12 @@ class SegmentationDataset(Dataset):
             i += 1
         return img_patch, label_dist
         
-def get_dataloader(name: str, patch_size: int):
+def get_dataloader(name: str, patch_size: int, batch_size: int):
     dataset = SegmentationDataset(name, 'masks', patch_size)
+    print(len(dataset))
     train_ds, test_ds = torch.utils.data.random_split(dataset, [0.8, 0.2])
-    train_loader = DataLoader(train_ds, batch_size=1, shuffle=True)
-    test_loader = DataLoader(test_ds, batch_size=1, shuffle=True)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader
 
 color_mapping = {
@@ -87,7 +95,10 @@ def get_label(cropped_mask):
     return np.argmax(colors)
 
 if __name__ == "__main__":
-    train, test = get_dataloader('normalized_red_quantized', patch_size=12)
+    train, test = get_dataloader('normalized_red_quantized', patch_size=12, batch_size=50)
+    print(len(train))
+    print(len(test))
     patch, label_dist = next(iter(train))
-    print(patch)
-    print(label_dist)
+    # a = T.ToPILImage()
+    # img= a(patch[0])
+    # img.show()
