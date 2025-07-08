@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 import torch.utils
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from torchvision import transforms as T
 from torchvision.io import decode_image
 from PIL import Image
@@ -63,11 +63,24 @@ class SegmentationDataset(Dataset):
         return img_patch, label_dist
         
 def get_dataloader(name: str, patch_size: int, batch_size: int):
+
+    split = [0.8, 0.2]
     dataset = SegmentationDataset(name, 'masks', patch_size)
+    train_ds, test_ds = torch.utils.data.random_split(dataset, split)
+
+    # label_counts is from csv file
+    label_counts = [1769718,1931275,1921037,286494,403494,996468]
+    weights = [1 / count for count in label_counts]
+    
+    train_sampler = WeightedRandomSampler(weights=weights, num_samples=int(np.sum(label_counts) / batch_size), replacement=True)
+    
     print(len(dataset))
-    train_ds, test_ds = torch.utils.data.random_split(dataset, [0.8, 0.2])
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    print(len(train_ds))
+    print(len(test_ds))
+    train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=train_sampler)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=True)
+    print(len(train_loader))
+    print(len(test_loader))
     return train_loader, test_loader
 
 color_mapping = {
@@ -80,12 +93,6 @@ color_mapping = {
 }
 
 def get_label(cropped_mask):
-    # width, height = mask.size
-    # colors = [0 for _ in range(6)]
-    # for i in range(width):
-    #     for j in range(height):
-    #         colors[color_mapping[cropped_mask.getpixel((i,j))]] += 1
-    # return np.argmax(colors)
     assert len(cropped_mask.shape) == 3
     colors = [0 for _ in range(6)]
     for i in range(cropped_mask.shape[1]):
