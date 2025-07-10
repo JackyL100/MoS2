@@ -58,6 +58,7 @@ class SegmentationDataset(Dataset):
                 label = get_label(mask_patch)
                 label_tensor = torch.tensor(label).to(torch.int64)
                 label_dist = nn.functional.softmax(nn.functional.one_hot(label_tensor, num_classes=6).to(torch.float32))
+                # label_dist = nn.functional.one_hot(label_tensor, num_classes=6).to(torch.float32)
                 break
             i += 1
         return img_patch, label_dist
@@ -71,13 +72,12 @@ def get_dataloader(name: str, patch_size: int, batch_size: int):
     # label_counts is from csv file
     label_counts = [1769718,1931275,1921037,286494,403494,996468]
     weights = [1 / count for count in label_counts]
-    
-    train_sampler = WeightedRandomSampler(weights=weights, num_samples=int(np.sum(label_counts) / batch_size), replacement=True)
+    # train_sampler = WeightedRandomSampler(weights=weights, num_samples=int(np.sum(label_counts) / batch_size), replacement=True)
     
     print(len(dataset))
     print(len(train_ds))
     print(len(test_ds))
-    train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=train_sampler)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=True)
     print(len(train_loader))
     print(len(test_loader))
@@ -101,11 +101,21 @@ def get_label(cropped_mask):
             colors[color_mapping[color]] += 1
     return np.argmax(colors)
 
+def count_labels(loader, arr):
+    for batch in loader:
+        _, labels = batch
+        labels = torch.argmax(labels, dim=1)
+        for label in labels:
+            l = int(label)
+            arr[l] += 1
+    print(arr)
+    return arr
+
 if __name__ == "__main__":
-    train, test = get_dataloader('normalized_red_quantized', patch_size=12, batch_size=50)
-    print(len(train))
-    print(len(test))
-    patch, label_dist = next(iter(train))
-    # a = T.ToPILImage()
-    # img= a(patch[0])
-    # img.show()
+    train, test = get_dataloader('normalized_red_quantized', patch_size=12, batch_size=100)
+
+    train_counts = [0 for _ in range(6)]
+    test_counts = [0 for _ in range(6)]
+
+    train_counts = count_labels(train, train_counts)
+    test_counts = count_labels(test, test_counts)
