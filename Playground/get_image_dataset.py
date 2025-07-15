@@ -44,15 +44,8 @@ class SegmentationDataset(Dataset):
                 img = torch.transpose(img, 1,2)
                 mask = torch.transpose(mask, 1, 2)
                 box = (row, col, self.patch_size, self.patch_size)
-                # print(box)
                 # crop out patch from image and mask
                 img_patch = T.functional.crop(img, box[0], box[1], box[2], box[3]).to(torch.float32)
-                # pil_box = (row, col, row + self.patch_size, col + self.patch_size)
-                # pil_img = pil_img.crop(pil_box)
-                # plt.title("pytorch")
-                # plt.imshow(img_patch.transpose(0,2))
-                # plt.show()
-                # pil_img.show()
                 mask_patch = T.functional.crop(mask, box[0], box[1], box[2], box[3])
                 # get the label of the patch based on dominant class in patch
                 label = get_label(mask_patch)
@@ -68,19 +61,19 @@ def get_dataloader(name: str, patch_size: int, batch_size: int):
     split = [0.8, 0.2]
     dataset = SegmentationDataset(name, 'masks', patch_size)
     train_ds, test_ds = torch.utils.data.random_split(dataset, split)
+    train_labels = []
+    for i in range(len(train_ds)):
+        train_labels.append(np.argmax(train_ds[i][1]))
+    class_counts = torch.bincount(torch.tensor(train_labels))
+    weights = 1 / class_counts[torch.tensor(train_labels)]
+    weights = weights.float()
+    train_sampler = WeightedRandomSampler(weights=weights, num_samples=len(train_ds))
 
-    # label_counts is from csv file
-    label_counts = [1769718,1931275,1921037,286494,403494,996468]
-    weights = [1 / count for count in label_counts]
-    # train_sampler = WeightedRandomSampler(weights=weights, num_samples=int(np.sum(label_counts) / batch_size), replacement=True)
-    
-    print(len(dataset))
-    print(len(train_ds))
-    print(len(test_ds))
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    # print(len(dataset))
+    # print(len(train_ds))
+    # print(len(test_ds))
+    train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=train_sampler)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=True)
-    print(len(train_loader))
-    print(len(test_loader))
     return train_loader, test_loader
 
 color_mapping = {
@@ -114,8 +107,8 @@ def count_labels(loader, arr):
 if __name__ == "__main__":
     train, test = get_dataloader('normalized_red_quantized', patch_size=12, batch_size=100)
 
-    train_counts = [0 for _ in range(6)]
-    test_counts = [0 for _ in range(6)]
+    # train_counts = [0 for _ in range(6)]
+    # test_counts = [0 for _ in range(6)]
 
-    train_counts = count_labels(train, train_counts)
-    test_counts = count_labels(test, test_counts)
+    # train_counts = count_labels(train, train_counts)
+    # test_counts = count_labels(test, test_counts)
