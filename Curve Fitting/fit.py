@@ -1,3 +1,5 @@
+# refactored process from LorentzianFit.ipynb
+
 from Lorentzian import LorentzianModel
 import numpy as np
 
@@ -10,7 +12,8 @@ def get_peaks(data, n: int):
     highest_peaks = dict(sorted(peaks.items(), key=lambda x: x[1], reverse=True))
     return list(highest_peaks.keys())
 
-file_path = '/Volumes/BEAR/Images_new/Raman/Sample 13/FeMoS2_1_loc1.txt'
+# path of txt file of Raman Spectroscopy of MoS2
+file_path = ''
 
 # initialize model
 with open(file_path, encoding='latin-1') as f:
