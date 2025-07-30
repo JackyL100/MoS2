@@ -66,5 +66,5 @@ if __name__ == "__main__":
     img, mask = next(iter(train))
     print(img.shape)
     print(mask.shape)
-    plt.imshow(mask[0][0])
+    plt.imshow(mask[0][1].cpu())
     plt.show()
