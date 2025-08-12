@@ -51,7 +51,7 @@ class ImageDataset(Dataset):
                 mask = decode_image(f'../Image Segmentation Data/{self.mask_path}/{image.name[:-3] + 'png'}').to(torch.float32).to(device)
                 masks = self.process_mask(mask)
             i+=1
-        return img[:, 6:-6, 6:-6], masks[:, 6:-6, 6:-6], mask
+        return img[:, 6:-6, 6:-6], masks[:, 6:-6, 6:-6], mask[:, 6:-6, 6:-6]
     
 def get_dataloader(folder_path, batch_size):
     split = [0.8, 0.2]
