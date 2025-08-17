@@ -14,34 +14,24 @@ import numpy as np
 
 import cv2
 
-img = cv2.imread('Image Segmentation Data/denoised/4_MoS2_4.jpg', -1)
+segment_color_map = {
+    (6,4,243) : 1,
+    (88,255,52): 2,
+    (255,28,36): 3,
+    (77,241,232): 4,
+    (209,209,216): 5
+}
 
-rgb_planes = cv2.split(img)
+colors = [(6,4,243), (88,255,52), (255,28,36), (77,241,232), (209,209,216)]
 
-result_planes = []
-result_norm_planes = []
-for plane in rgb_planes:
-    dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
-    bg_img = cv2.medianBlur(dilated_img, 21)
-    diff_img = 255 - cv2.absdiff(plane, bg_img)
-    norm_img = cv2.normalize(diff_img,None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
-    result_planes.append(diff_img)
-    result_norm_planes.append(norm_img)
-    
-result = cv2.merge(result_planes)
-result_norm = cv2.merge(result_norm_planes)
+img = cv2.imread('Image Segmentation Data/segmented_2/27_FeMoS2_24_8.png', -1)
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-def adjust_gamma(image, gamma=1.0):
+def get_mask(segmented):
+   for i in range(segmented.shape[0]):
+      for j in range(segmented.shape[1]):
+         segmented[i][j] = np.array([0,0,0]) if tuple(segmented[i][j]) not in colors else segmented[i][j]
+   plt.imshow(img)
+   plt.show()
 
-   invGamma = 1.0 / gamma
-   table = np.array([((i / 255.0) ** invGamma) * 255
-      for i in np.arange(0, 256)]).astype("uint8")
-
-   return cv2.LUT(image, table)
-
-
-gamma = 0.1                                 # change the value here to get different result
-adjusted = adjust_gamma(result_norm, gamma=gamma)
-
-plt.imshow(adjusted)
-plt.show()
+get_mask(img)

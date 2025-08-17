@@ -26,8 +26,9 @@ class ImageDataset(Dataset):
             (7, 255, 251) : 4,
             (88, 88, 88) : 5
         }
+        self.formats = ['png', 'jpg', 'jpeg', 'JPG']
         for path in os.listdir(f'../Image Segmentation Data/{self.image_path}'):
-            if os.path.isfile(os.path.join(f'../Image Segmentation Data/{self.image_path}', path)):
+            if os.path.isfile(os.path.join(f'../Image Segmentation Data/{self.image_path}', path)) and path[-3:] in self.formats:
                 self.length += 1
     def process_mask(self, mask):
         masks = torch.zeros((6,588,780)).to(device)
@@ -46,25 +47,32 @@ class ImageDataset(Dataset):
     def __getitem__(self, index):
         i = 0
         for image in os.scandir(f'../Image Segmentation Data/{self.image_path}'):
+            if image.path[-3:] not in self.formats:
+                continue
             if index == i:
-                img = decode_image(image.path).to(torch.float32).to(device)
-                mask = decode_image(f'../Image Segmentation Data/{self.mask_path}/{image.name[:-3] + 'png'}').to(torch.float32).to(device)
-                masks = self.process_mask(mask)
+
+                try:
+                    img = decode_image(image.path).to(torch.float32).to(device)
+                    mask = decode_image(f'../Image Segmentation Data/{self.mask_path}/{image.name[:-3] + 'png'}').to(torch.float32).to(device)
+                    masks = self.process_mask(mask)
+                except:
+                    print(image.path)
+                    quit()
             i+=1
         return img[:, 6:-6, 6:-6], masks[:, 6:-6, 6:-6], mask[:, 6:-6, 6:-6]
     
-def get_dataloader(folder_path, batch_size):
+def get_dataloader(image_folder, mask_folder, batch_size):
     split = [0.8, 0.2]
-    dataset = ImageDataset(folder_path, 'masks')
+    dataset = ImageDataset(image_folder, mask_folder)
     train_ds, test_ds = torch.utils.data.random_split(dataset, split)
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader
 
 if __name__ == "__main__":
-    train, test = get_dataloader('normalized_red_quantized', 1)
-    img, mask = next(iter(train))
+    train, test = get_dataloader('images_2', 'masks_2', 1)
+    img, _, mask = next(iter(train))
     print(img.shape)
     print(mask.shape)
-    plt.imshow(mask[0][1].cpu())
+    plt.imshow(mask[0].permute(1,2,0).cpu() / 255)
     plt.show()
