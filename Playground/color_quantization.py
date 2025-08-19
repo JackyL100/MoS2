@@ -117,11 +117,11 @@ def create_folder(src_folder: str, dest_folder:str, technique:str):
             img.save(f'Image Segmentation Data/{dest_folder}/' + image.name)
 
 if __name__ == '__main__':
-    n_colors = 2
-    file_path = 'Image Segmentation Data/normalized/14_FeMoS2_1.jpg'
-    img = cv2.imread(file_path)
-    original, denoised, quantized_denoised = color_quant_kmeans(img, n_colors, denoise=True)
-    _, _, quantized = color_quant_kmeans(img, n_colors, denoise=False)
-    compare_imgs([original, denoised, quantized_denoised, quantized], ["Original", "Denoised", "Quantized and Denoised","Quantized"])
+    # n_colors = 15
+    # file_path = 'Image Segmentation Data/normalized/14_FeMoS2_1.jpg'
+    # img = cv2.imread(file_path)
+    # original, denoised, quantized_denoised = color_quant_kmeans(img, n_colors, denoise=True)
+    # _, _, quantized = color_quant_kmeans(img, n_colors, denoise=False)
+    # compare_imgs([original, denoised, quantized_denoised, quantized], ["Original", "Denoised", "Quantized and Denoised","Quantized"])
 
-    # create_folder("normalized", "normalized_quantized", 'quantized')
+    create_folder("normalized_2", "normalized_quantized_2", 'quantized')

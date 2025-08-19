@@ -93,11 +93,12 @@ def normalize_img(img):
 
 
 def create_folder(src_folder: str, dest_folder:str, technique):
-    os.makedirs(f"Image Segmentation Data/{dest_folder}", exist_ok=True)
-    for image in os.scandir(f"Image Segmentation Data/{src_folder}"):
-        img = cv2.imread(image.path)
-        after_image = Image.fromarray(technique(img))
-        after_image.save(f'Image Segmentation Data/{dest_folder}/' + image.name)
+    os.makedirs(f"../Image Segmentation Data/{dest_folder}", exist_ok=True)
+    for image in os.scandir(f"../Image Segmentation Data/{src_folder}"):
+        if image.name[-3:] == 'png':
+            img = cv2.imread(image.path)
+            after_image = Image.fromarray(technique(img))
+            after_image.save(f'../Image Segmentation Data/{dest_folder}/' + image.name)
 
 
 # img = cv2.imread(file_path)
@@ -134,8 +135,4 @@ def percentile_whitebalance(image, percentile_value):
     plt.show()
 
 if __name__ == '__main__':
-    # create_folder('images/', 'normalized', normalize_img)
-    file_path = 'Image Segmentation Data/images/4_MoS2_4.jpg'
-    img = cv2.imread(file_path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    percentile_whitebalance(img, 99.9)
+    create_folder('images_2', 'normalized_2', normalize_img)
