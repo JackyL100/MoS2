@@ -42,22 +42,31 @@ class ImageDataset(Dataset):
         return masks
 
     def __len__(self):
-        return self.length
+        return self.length * 4
     
     def __getitem__(self, index):
         i = 0
         for image in os.scandir(f'../Image Segmentation Data/{self.image_path}'):
             if image.path[-3:] not in self.formats:
                 continue
-            if index == i:
+            if index // 4 == i:
 
                 try:
                     img = decode_image(image.path).to(torch.float32).to(device)
                     mask = decode_image(f'../Image Segmentation Data/{self.mask_path}/{image.name[:-3] + 'png'}').to(torch.float32).to(device)
                     masks = self.process_mask(mask)
+
+                    if np.random.random(1)[0] > 0.5: # flip along height dimension
+                        img = torch.flip(img, [1])
+                        mask = torch.flip(mask, [1])
+                        masks = torch.flip(masks, [1])
+                    if np.random.random(1)[0] > 0.5: # flip along width dimension
+                        img = torch.flip(img, [2])
+                        mask = torch.flip(mask , [2])
+                        masks = torch.flip(masks, [2])
+
                 except:
                     print(image.path)
-                    quit()
             i+=1
         return img[:, 6:-6, 6:-6], masks[:, 6:-6, 6:-6], mask[:, 6:-6, 6:-6]
     
