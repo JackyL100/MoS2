@@ -5,7 +5,7 @@ import matplotlib.image as mpimg
 import cv2
 import os
 from matplotlib.patches import Rectangle
-from skimage import img_as_ubyte
+
 def img_is_color(img):
 
     if len(img.shape) == 3:
@@ -113,26 +113,6 @@ def create_folder(src_folder: str, dest_folder:str, technique):
 # mask = np.where(normalized_image[...,2] > normalized_image[...,0] * 1.0,1,0)
 
 # show_image_list([normalized_image, mask], ["Normalized", "Mask"])
-
-def percentile_whitebalance(image, percentile_value):
-    fig, ax = plt.subplots(1,2, figsize=(12,6))
-    for channel, color in enumerate('rgb'):
-        channel_values = image[:,:,channel]
-        value = np.percentile(channel_values, percentile_value)
-        ax[0].step(np.arange(256), 
-                np.bincount(channel_values.flatten(), 
-                minlength=256)*1.0 / channel_values.size, 
-                c=color)
-        ax[0].set_xlim(0, 255)
-    ax[0].set_xlabel('channel value')
-    ax[0].set_ylabel('fraction of pixels')
-    ax[0].set_title('Histogram of colors in RGB channels')    
-    whitebalanced = img_as_ubyte(
-            (image*1.0 / np.percentile(image, 
-            percentile_value, axis=(0, 1))).clip(0, 1))
-    ax[1].imshow(whitebalanced)
-    ax[1].set_title('Whitebalanced Image')
-    plt.show()
 
 if __name__ == '__main__':
     create_folder('images_2', 'normalized_2', normalize_img)

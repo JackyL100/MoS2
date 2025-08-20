@@ -63,11 +63,6 @@ def color_quant_kmeans(img,n_colors, denoise=False, channel=None, BGR2RGB=True):
     Xnew = cluster_centers[Xin,:]
 
     # Bring it back to original dimensions
-    Xnim = np.zeros((dim[0], dim[1],3))
-    # Xnim[...,0] = Xnew.squeeze().reshape((588,780))
-    # Xnim[...,1] = vectorized_img[...,1].reshape((588,780))
-    # Xnim[...,2] = vectorized_img[...,2].reshape(588,780)
-
     Xnim = vectorized_img.reshape((588,780, 3))
     if channel is not None:
         Xnim[...,channel] = Xnew.squeeze().reshape(588,780)
@@ -115,26 +110,6 @@ def normalize_img(img):
     # Normalize image intensities
     normalized_image = cv2.normalize(sharpened_image, None, 0, 255, cv2.NORM_MINMAX)
     return normalized_image
-
-
-def create_folder(src_folder: str, dest_folder:str, technique:str):
-    available_tech = ['quantized', 'denoised', 'normalized']
-    assert technique in available_tech
-    os.makedirs(f"Image Segmentation Data/{dest_folder}", exist_ok=True)
-    for image in os.scandir(f"Image Segmentation Data/{src_folder}"):
-        # original = cv2.cvtColor(cv2.imread(image.path), cv2.COLOR_BGR2RGB)
-        original = cv2.imread(image.path)
-        if technique == 'quantized':
-            _, _, quantized_img = color_quant_kmeans(original, 15, denoise=False)
-            img = Image.fromarray(quantized_img)
-            img.save(f'Image Segmentation Data/{dest_folder}/' + image.name)
-        elif technique == 'denoised':
-            _, denoised, _ = color_quant_kmeans(original, 15, denoise=True)
-            img = Image.fromarray(denoised)
-            img.save(f'Image Segmentation Data/{dest_folder}/' + image.name)
-        elif technique == 'normalized':
-            img = Image.fromarray(normalize_img(cv2.imread(image.path)))
-            img.save(f'Image Segmentation Data/{dest_folder}/' + image.name)
 
 if __name__ == '__main__':
     n_colors = 5
