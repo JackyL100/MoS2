@@ -9,7 +9,7 @@ import cv2
 
 def compare_imgs(imgs, titles):
     fig, axarr = plt.subplots(2,2)
-    fig.set_size_inches(13,9)
+    fig.set_size_inches(12,9)
     fig.tight_layout()
     count = 0
     for i in range(2):
@@ -20,11 +20,25 @@ def compare_imgs(imgs, titles):
             count += 1
     plt.show()
 
-def color_quant_kmeans(img,n_colors, denoise=False):
+def color_quant_kmeans(img,n_colors, denoise=False, channel=None, BGR2RGB=True):
+    """
+    Color quantizes an img using n colors
 
+    Args:
+        img (np array): image to be color quantized
+        n_colors (int): amount of unique colors the resulting image can have
+        denoise (bool): option to denoise image before using color quantization
+        BGR2RGB (bool): convert image from BGR encoding to RGB encoding
+    
+    Returns:
+        img (np array): original image
+        denoised_img (np array): denoised image of denoise=True otherwise None
+        Xnim (np array): color quantized image
+    """
     dim = img.shape
     vectorized_img = np.zeros(dim)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    if BGR2RGB:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     if denoise:
         # Sharpen using unsharp mask
         blurred = cv2.GaussianBlur(img, (0, 0), 3)
@@ -37,9 +51,11 @@ def color_quant_kmeans(img,n_colors, denoise=False):
         vectorized_img = img.reshape(-1,3)/255.0
 
     km = KMeans(n_clusters=n_colors, max_iter=100, tol=0.001, init='random', n_init=5)
-    km.fit(vectorized_img[...,0].reshape(-1,1))
+    if channel is None:
+        km.fit(vectorized_img.reshape(-1,1))
+    else:
+        km.fit(vectorized_img[...,channel].reshape(-1,1))
     
-
     Xin = km.labels_
 
     # The image in new colors
@@ -48,9 +64,13 @@ def color_quant_kmeans(img,n_colors, denoise=False):
 
     # Bring it back to original dimensions
     Xnim = np.zeros((dim[0], dim[1],3))
-    Xnim[...,0] = Xnew.squeeze().reshape((588,780))
-    Xnim[...,1] = vectorized_img[...,1].reshape((588,780))
-    Xnim[...,2] = vectorized_img[...,2].reshape(588,780)
+    # Xnim[...,0] = Xnew.squeeze().reshape((588,780))
+    # Xnim[...,1] = vectorized_img[...,1].reshape((588,780))
+    # Xnim[...,2] = vectorized_img[...,2].reshape(588,780)
+
+    Xnim = vectorized_img.reshape((588,780, 3))
+    if channel is not None:
+        Xnim[...,channel] = Xnew.squeeze().reshape(588,780)
     Xnim *= 255.0
     Xnim = Xnim.astype(np.uint8)
     if denoise:
@@ -117,11 +137,11 @@ def create_folder(src_folder: str, dest_folder:str, technique:str):
             img.save(f'Image Segmentation Data/{dest_folder}/' + image.name)
 
 if __name__ == '__main__':
-    # n_colors = 15
-    # file_path = 'Image Segmentation Data/normalized/14_FeMoS2_1.jpg'
-    # img = cv2.imread(file_path)
-    # original, denoised, quantized_denoised = color_quant_kmeans(img, n_colors, denoise=True)
-    # _, _, quantized = color_quant_kmeans(img, n_colors, denoise=False)
-    # compare_imgs([original, denoised, quantized_denoised, quantized], ["Original", "Denoised", "Quantized and Denoised","Quantized"])
+    n_colors = 5
+    file_path = 'Image Segmentation Data/images_2/13_FeMoS2_2.png'
+    img = cv2.imread(file_path)
+    original, denoised, quantized_denoised = color_quant_kmeans(img, n_colors, denoise=True, channel=2)
+    _, _, quantized = color_quant_kmeans(img, n_colors, denoise=False)
+    compare_imgs([original, denoised, quantized_denoised, quantized], ["Original", "Denoised", "Quantized and Denoised","Quantized"])
 
-    create_folder("normalized_2", "normalized_quantized_2", 'quantized')
+    # create_folder("normalized_2", "normalized_quantized_2", 'quantized')
