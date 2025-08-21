@@ -18,13 +18,21 @@ class ImageDataset(Dataset):
         self.length = 0
         self.image_path = image_folder
         self.mask_path = mask_folder
+        # self.color_mapping = {
+        #     (0,0,0) : 0,
+        #     (60, 28, 255) : 1,
+        #     (73, 255, 52) : 2,
+        #     (255, 70, 70) : 3,
+        #     (7, 255, 251) : 4,
+        #     (88, 88, 88) : 5
+        # }
         self.color_mapping = {
-            (0,0,0) : 0,
-            (60, 28, 255) : 1,
-            (73, 255, 52) : 2,
-            (255, 70, 70) : 3,
-            (7, 255, 251) : 4,
-            (88, 88, 88) : 5
+            (0,0,0) : 0, 
+            (6,4,243) : 1, 
+            (88,255,52) : 2, 
+            (255,28,36) : 3, 
+            (77,241,232) : 4, 
+            (209,209,216) : 5
         }
         self.formats = ['png', 'jpg', 'jpeg', 'JPG']
         for path in os.listdir(f'../Image Segmentation Data/{self.image_path}'):
@@ -80,8 +88,28 @@ def get_dataloader(image_folder, mask_folder, batch_size):
 
 if __name__ == "__main__":
     train, test = get_dataloader('images_2', 'masks_2', 1)
-    img, _, mask = next(iter(train))
+    img, masks, mask = next(iter(train))
     print(img.shape)
     print(mask.shape)
-    plt.imshow(mask[0].permute(1,2,0).cpu() / 255)
+    masks = masks.detach().cpu().numpy()
+
+    fig, axs = plt.subplots(4, 2)
+    fig.set_size_inches(12,12)
+    fig.tight_layout()
+    axs[0,0].set_title('Original')
+    axs[0,0].imshow(img[0].detach().cpu().numpy().transpose(1,2,0) / 255.0)
+    axs[0,1].set_title("Background Mask")
+    axs[0,1].imshow(masks[0][0], cmap='gray')
+    axs[1,0].set_title("Monolayer Mask")
+    axs[1,0].imshow(masks[0][1], cmap='gray')
+    axs[1,1].set_title("Bilayer Mask")
+    axs[1,1].imshow(masks[0][2], cmap='gray')
+    axs[2,0].set_title("Trilayer Mask")
+    axs[2,0].imshow(masks[0][3], cmap='gray')
+    axs[2,1].set_title("Four-layer Mask")
+    axs[2,1].imshow(masks[0][4], cmap='gray')
+    axs[3,0].set_title("Bulk Mask")
+    axs[3,0].imshow(masks[0][5], cmap='gray')
+    axs[3,1].set_title("Ground Truth")
+    axs[3,1].imshow(mask[0].permute(1,2,0).detach().cpu().numpy()/255.0)
     plt.show()
